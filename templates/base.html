@@ -1,0 +1,53 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#112e4c">
+  <title>Awaaz Adhikar | Community Voice Rights</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="stylesheet" href="{% static 'step5.css' %}">
+  <link rel="stylesheet" href="{% static 'redesign.css' %}">
+  <link rel="stylesheet" href="{% static 'step7.css' %}">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
+  <div class="tricolour" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="utilitybar"><div class="container utility-inner">
+    <span>भारत की भाषाएँ &nbsp;|&nbsp; Bhasha & Bol Bharat</span>
+    <div class="utility-actions"><span class="prototype-note">Independent hackathon prototype</span><button type="button" id="fontSizeToggle" aria-label="Increase text size">A+</button><button type="button" id="contrastToggle" aria-label="Toggle high contrast">◐</button></div>
+  </div></div>
+  <header class="site-header"><div class="container header-inner">
+    <a href="{% url 'home' %}" class="site-brand"><span class="brand-mark" aria-hidden="true">◉<span>♫</span></span><span><strong>आवाज़ अधिकार</strong><em>AWAAZ ADHIKAR</em><small>Voice Sovereignty & Community Consent</small></span></a>
+    <div class="leadership-strip" aria-label="Historical G20 India and public leadership references">
+      <a class="g20-chip" href="https://www.g20.in/en/g20-india-2023/logo-theme.html" target="_blank" rel="noopener noreferrer" title="India G20 Presidency, 2023 — historical reference"><strong>G20</strong><small>INDIA · 2023</small></a>
+      <a class="leader-portrait" href="https://www.pmindia.gov.in/en/pms-profile/" target="_blank" rel="noopener noreferrer"><img src="{% static 'portraits/narendra-modi.jpg' %}" alt="Shri Narendra Modi, Prime Minister of India" width="54" height="54"><span><b>Shri Narendra Modi</b><small>Prime Minister</small></span></a>
+      <a class="leader-portrait" href="https://www.mha.gov.in/index.php/key-person/amit-shah" target="_blank" rel="noopener noreferrer"><img src="{% static 'portraits/amit-shah.jpg' %}" alt="Shri Amit Shah, Union Home Minister" width="54" height="54"><span><b>Shri Amit Shah</b><small>Union Home Minister</small></span></a>
+    </div>
+  </div></header>
+  <nav class="primary-nav" aria-label="Main navigation"><div class="container nav-inner">
+    <div class="nav-links"><a href="{% url 'home' %}">Home</a><a href="{% url 'communities' %}">Communities</a><a href="{% url 'government_services' %}">Language Services</a>
+    {% if user.is_authenticated %}<a href="{% url 'dashboard' %}">My Dashboard</a>{% if user.profile.role == 'speaker' %}<a href="{% url 'dashboard' %}#access-requests">Access Requests</a><a href="{% url 'my_recordings' %}">My Recordings</a>{% elif user.profile.role == 'researcher' %}<a href="{% url 'dashboard' %}#my-requests">My Requests</a>{% elif user.profile.role == 'council' %}<a class="nav-council-link" href="{% url 'council_dashboard' %}">👥 Council Dashboard</a><a href="{% url 'council_dashboard' %}#community-management">Join Requests</a>{% endif %}{% if user.is_superuser %}<a class="nav-council-link" href="{% url 'council_setup' %}">⚙ Council Setup</a>{% endif %}{% else %}<a href="{% url 'login' %}?next={% url 'council_dashboard' %}">Council Login</a>{% endif %}</div>
+    <div class="nav-actions">
+      {% if user.is_authenticated %}{% if session_remaining_seconds != None %}<span class="nav-timer" title="45-minute session">⏱ <span id="sessionTimer" data-seconds="{{ session_remaining_seconds }}">45:00</span></span>{% endif %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="nav-button">Logout</button></form>
+      {% else %}<a class="nav-login" href="{% url 'login' %}">Login</a><a class="nav-register" href="{% url 'signup' %}">Register →</a>{% endif %}
+    </div>
+  </div></nav>
+  <main id="mainContent" class="container page-main">
+    {% if messages %}<div class="flash-stack" role="status" aria-live="polite">{% for message in messages %}<div class="flash {% if message.tags == 'error' %}flash-error{% elif message.tags == 'warning' %}flash-warning{% else %}flash-success{% endif %}"><span>{{ message }}</span><button type="button" onclick="this.parentElement.remove()" aria-label="Dismiss notification">×</button></div>{% endfor %}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer"><div class="container footer-inner footer-grid"><div><div class="footer-brand">◉ Awaaz Adhikar</div><p>Empowering speakers. Protecting languages. Enforcing community choice.</p><small>Independent student hackathon prototype. Not affiliated with the Government of India, G20, PMO or a ministry.</small></div><div><b>Explore</b><p><a href="{% url 'communities' %}">Language Communities</a></p><p><a href="{% url 'government_services' %}">Language Services</a></p></div><div><b>Official Government Websites ↗</b><p><a href="https://www.india.gov.in/" target="_blank" rel="noopener noreferrer">National Portal of India</a></p><p><a href="https://bhashini.gov.in/" target="_blank" rel="noopener noreferrer">BHASHINI</a></p><p><a href="https://www.cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">National Cybercrime Reporting Portal</a></p></div><div><b>Official Helplines</b><p><a href="tel:1930">1930</a> — Cyber financial fraud</p><p><a href="tel:1915">1915</a> — National Consumer Helpline</p><small>Reference contacts only; not Awaaz Adhikar support.</small></div></div><div class="container footer-base">© 2026 Awaaz Adhikar • Hackathon Prototype <span>Leadership photos: PM India & Ministry of Home Affairs. G20 2023: historical reference only.</span></div></footer>
+  <script>
+  (()=>{
+    const el=document.getElementById('sessionTimer');if(el){let seconds=Number(el.dataset.seconds);const update=()=>{el.textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;if(seconds<=0){location.replace('{% url 'login' %}');return;}seconds--;};update();setInterval(update,1000);}
+    const body=document.body;
+    if(localStorage.getItem('aa_large_text')==='yes')body.classList.add('large-text');
+    if(localStorage.getItem('aa_contrast')==='yes')body.classList.add('high-contrast');
+    document.getElementById('fontSizeToggle').onclick=()=>{body.classList.toggle('large-text');localStorage.setItem('aa_large_text',body.classList.contains('large-text')?'yes':'no')};
+    document.getElementById('contrastToggle').onclick=()=>{body.classList.toggle('high-contrast');localStorage.setItem('aa_contrast',body.classList.contains('high-contrast')?'yes':'no')};
+  })();
+  </script>
+</body>
+</html>

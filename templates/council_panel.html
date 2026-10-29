@@ -1,0 +1,30 @@
+<div class="flow-strip"><div><b>1</b><span>Verify members</span></div><div><b>2</b><span>Set language rules</span></div><div><b>3</b><span>Monitor how voices are used</span></div></div>
+<section class="dash-section" id="community-management">
+<div class="dash-section-head"><div><span class="eyebrow">COMMUNITY FIRST</span><h2>Community Management</h2><p>Review who belongs to your language community.</p></div>{% if council_community %}<span class="count-bubble">{{ council_community.name }}</span>{% endif %}</div>
+{% if council_community %}
+<div class="council-summary"><span><b>{{ approved_memberships|length }}</b> Approved Members</span><span><b>{{ pending_memberships|length }}</b> Pending Join Requests</span><span><b>{{ community_recording_count }}</b> Language Recordings</span></div>
+<h3 class="subheading">Join Requests</h3>
+{% for membership in pending_memberships %}
+<div class="approval-row"><div class="researcher-avatar">{{ membership.user.username|slice:':1'|upper }}</div><div class="approval-person"><b>{{ membership.user.username }}</b><small>Applied {{ membership.requested_at|date:'d M Y' }}</small></div><div class="approval-record"><small>Community</small><b>{{ council_community.name }}</b></div><div class="approval-actions"><form method="post" action="{% url 'review_membership' membership.pk %}">{% csrf_token %}<input type="hidden" name="decision" value="approved"><button class="btn" type="submit">✓ Approve</button></form><form method="post" action="{% url 'review_membership' membership.pk %}">{% csrf_token %}<input type="hidden" name="decision" value="rejected"><button class="btn outline-danger" type="submit">Reject</button></form></div></div>
+{% empty %}<div class="dashboard-empty"><span>☑</span><div><b>No pending members</b><p>New community join requests will appear here.</p></div></div>{% endfor %}
+<h3 class="subheading">Approved Members</h3><div class="member-tags">{% for member in approved_memberships %}<span>✓ {{ member.user.username }}</span>{% empty %}<p class="subtle">No approved members yet.</p>{% endfor %}</div>
+{% elif profile.community_name %}<div class="notice">No community is configured for “{{ profile.community_name }}”. Ask the administrator to add it in Django Admin.</div>
+{% else %}<div class="notice">Your Council account needs an assigned language. In Django Admin → Profiles, enter a verified community language (for example, Bhojpuri).</div>{% endif %}
+</section>
+<section class="dash-section" id="council-rules"><div class="dash-section-head"><div><span class="eyebrow">COMMUNITY DECISION</span><h2>Allowed Uses & Restrictions</h2><p>The Council chooses which uses the community permits. Missing rules deny access by default.</p></div></div>
+{% if profile.community_name %}
+<div class="policy-grid">
+{% for value,label in purpose_choices %}<form class="policy-tile" method="post" action="{% url 'council_policy' %}">{% csrf_token %}<input type="hidden" name="purpose" value="{{ value }}"><b>{{ label }}</b><small>Set a community-wide rule for {{ profile.community_name }}</small><div class="policy-options"><label><input type="radio" name="allowed" value="yes" required> ✓ Allow</label><label><input type="radio" name="allowed" value="no" required> ✕ Block</label></div><button class="btn" type="submit">Save Rule</button></form>{% endfor %}</div>
+<h3 class="subheading">Current Community Rules</h3><div class="member-tags">{% for rule in council_policies %}<span>{{ rule.get_purpose_display }}: <b>{% if rule.allowed %}Allowed ✓{% else %}Blocked ✕{% endif %}</b></span>{% empty %}<p class="subtle">No rules are set — future downloads are blocked until the council explicitly allows a use.</p>{% endfor %}</div>
+{% else %}<div class="notice">An administrator must assign your council community before you can edit these policies.</div>{% endif %}
+<p class="section-hint">Even when the council allows a use, the recording speaker must enable that purpose and individually approve the researcher.</p>
+</section>
+
+<section class="dash-section" id="council-requests"><div class="dash-section-head"><div><span class="eyebrow">RECORDING-LEVEL DECISIONS</span><h2>Researcher Download Approvals</h2><p>Review each speaker-approved request. Individual approval does not override community-wide policy or speaker consent.</p></div></div>
+{% for item in council_access_requests %}
+<div class="approval-row"><div class="approval-person"><b>{{ item.researcher.username }}</b><small>{{ item.recording.title }} • {{ item.recording.language }} • {{ item.get_purpose_display }}</small></div><div class="approval-record"><small>Council status</small><b>{{ item.get_council_status_display }}</b></div><div class="approval-actions">
+<form method="post" action="{% url 'council_review_access' item.pk %}">{% csrf_token %}<input type="hidden" name="decision" value="approved"><button class="btn" type="submit">Approve request</button></form>
+<form method="post" action="{% url 'council_review_access' item.pk %}">{% csrf_token %}<input type="hidden" name="decision" value="rejected"><button class="btn outline-danger" type="submit">Block / Revoke</button></form>
+</div></div>{% empty %}<p class="subtle">No speaker-approved requests for your language yet.</p>{% endfor %}
+</section>
+{% include 'usage_logs.html' %}

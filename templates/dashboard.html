@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'step2.css' %}">
+<link rel="stylesheet" href="{% static 'step3.css' %}">
+<div class="workbench">
+  <aside class="work-sidebar" aria-label="Dashboard sections">
+    <div class="work-profile"><span class="avatar-icon">{{ user.username|slice:':1'|upper }}</span><span><b>{{ user.username }}</b><small>{{ profile.get_role_display }}</small></span></div>
+    <div class="side-caption">YOUR WORKSPACE</div>
+    <a class="side-active" href="{% if role == 'council' %}{% url 'council_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}">⌂ &nbsp; Overview</a>
+    {% if role == 'speaker' %}
+    <a href="#access-requests">✉ &nbsp; Access Requests <span class="side-count">{{ pending_access_count }}</span></a>
+    <a href="#record-section">🎙 &nbsp; Record Voice</a>
+    <a href="{% url 'my_recordings' %}">▤ &nbsp; My Recordings</a>
+    {% elif role == 'researcher' %}
+    <a href="#explore-recordings">⌕ &nbsp; Explore Recordings</a>
+    <a href="#my-requests">✉ &nbsp; My Requests</a>
+    {% elif role == 'council' %}
+    <a href="#community-management">♧ &nbsp; Manage Community</a>
+    <a href="#council-rules">⚖ &nbsp; Council Rules</a>
+    <a href="#council-requests">✓ &nbsp; Download Approvals</a>
+    {% endif %}
+    <a href="{% url 'communities' %}">◎ &nbsp; Languages & Communities</a>
+    <div class="sidebar-help"><b>Why this matters</b><p>A recording belongs to its speaker. A researcher needs separate approval, and council limits always apply.</p></div>
+  </aside>
+  <div class="work-main">
+    <div class="work-topline"><div><span class="eyebrow">AWAAZ ADHIKAR / {% if role == 'council' %}COMMUNITY COUNCIL{% else %}CONTROL CENTER{% endif %}</span><h1>{% if role == 'council' %}Community Council Dashboard{% else %}Namaste, {{ user.username }} <span aria-hidden="true">👋</span>{% endif %}</h1><p>{% if role == 'speaker' %}Your voice. Your permission. Your choice.{% elif role == 'researcher' %}Discover language recordings and request responsible access.{% else %}Welcome {{ user.username }} — review members and protect {{ profile.community_name|default:'your language' }} voices.{% endif %}</p></div><span class="info-pill">🔐 Secure 45-minute session</span></div>
+    {% if role == 'speaker' %}
+    <div class="overview-grid">
+      <div class="overview-stat"><span class="stat-emoji">🎧</span><small>My recordings</small><strong>{{ recording_count }}</strong><em>Uploaded voices</em></div>
+      <div class="overview-stat"><span class="stat-emoji">✅</span><small>Active voices</small><strong>{{ active_count }}</strong><em>Not withdrawn</em></div>
+      <div class="overview-stat highlight-stat"><span class="stat-emoji">📨</span><small>Awaiting your decision</small><strong>{{ pending_access_count }}</strong><em>Researcher requests</em></div>
+      <div class="overview-stat"><span class="stat-emoji">🛡</span><small>Approved requests</small><strong>{{ approved_access_count }}</strong><em>Still subject to policy</em></div>
+    </div>
+    <section class="dash-section" id="access-requests"><div class="dash-section-head"><div><span class="eyebrow">IMPORTANT • SPEAKER DECIDES</span><h2>Researcher Access Requests</h2><p>Check the researcher's name and recording. Choose Allow Access or Reject.</p></div><span class="count-bubble">{{ pending_access_count }} pending</span></div>
+      {% for access_request in pending_access_requests %}<div class="approval-row"><div class="researcher-avatar">{{ access_request.researcher.username|slice:':1'|upper }}</div><div class="approval-person"><b>{{ access_request.researcher.username }}</b><small>Researcher • {{ access_request.requested_at|date:'d M Y, H:i' }}</small></div><div class="approval-record"><small>Recording</small><b>{{ access_request.recording.title }}</b><span>{{ access_request.get_purpose_display }}</span></div><div class="approval-actions"><form method="post" action="{% url 'speaker_review_access' access_request.pk %}">{% csrf_token %}<input type="hidden" name="decision" value="approved"><button class="btn" type="submit">✓ Allow Access</button></form><form method="post" action="{% url 'speaker_review_access' access_request.pk %}">{% csrf_token %}<input type="hidden" name="decision" value="rejected"><button class="btn outline-danger" type="submit">Reject</button></form></div></div>{% empty %}<div class="dashboard-empty"><span>📭</span><div><b>No pending access requests</b><p>When a researcher clicks “Request Permission”, their name will appear here.</p></div></div>{% endfor %}
+      <p class="section-hint">Approval does not bypass the recording's allowed uses or the Community Council rules. You can revoke approval later in My Recordings.</p>
+    </section>
+    <section class="dash-section" id="record-section"><div class="dash-section-head"><div><span class="eyebrow">CREATE & PROTECT</span><h2>Record a Voice</h2><p>Record using your mic or choose an existing audio file.</p></div></div>
+      <div class="cards recorder-grid"><article class="record-widget"><span class="tile-number">01</span><div class="tile-icon">🎙</div><h3>Record with Microphone</h3><p>Press Start, speak clearly, then Stop. Your audio is prepared for upload.</p><div class="rec-actions"><button class="btn" type="button" id="startBtn">● Start Recording</button><button class="btn stop" type="button" id="stopBtn" disabled>■ Stop</button></div><p id="recordStatus" role="status">Microphone ready.</p><audio id="previewAudio" controls hidden style="width:100%"></audio></article>
+        <article class="record-widget"><span class="tile-number">02</span><div class="tile-icon">⬆</div><h3>Upload & Save Audio</h3><p>Name your recording, select language, and upload it privately.</p><form action="{% url 'upload_recording' %}" method="post" enctype="multipart/form-data" id="recordingForm">{% csrf_token %}{{ recording_form.as_p }}<button class="btn" type="submit">Save Recording →</button></form><p class="subtle">MP3, WAV, WebM, OGG or M4A • Max 10 MB</p></article></div>
+    </section>
+    <div class="dashboard-cta"><div><b>🎧 My Recording Library</b><p>Play recordings, enable uses, revoke research access, withdraw or delete.</p></div><a class="btn" href="{% url 'my_recordings' %}">Manage Recordings →</a></div>
+    <script src="{% static 'recorder.js' %}" defer></script>
+    {% elif role == 'researcher' %}
+    <div class="overview-grid"><div class="overview-stat"><span class="stat-emoji">⌕</span><small>Visible recordings</small><strong>{{ browse_recordings|length }}</strong><em>Explore the catalogue</em></div><div class="overview-stat highlight-stat"><span class="stat-emoji">⏳</span><small>Pending requests</small><strong>{{ researcher_pending_count }}</strong><em>Speaker decision needed</em></div><div class="overview-stat"><span class="stat-emoji">✓</span><small>Speaker approved</small><strong>{{ researcher_approved_count }}</strong><em>Other rules still apply</em></div></div>
+    {% include 'researcher_panel.html' %}
+    {% elif role == 'council' %}
+    <div class="overview-grid"><div class="overview-stat"><span class="stat-emoji">♧</span><small>Members</small><strong>{{ approved_memberships|length }}</strong><em>Approved community</em></div><div class="overview-stat highlight-stat"><span class="stat-emoji">⏳</span><small>Join requests</small><strong>{{ pending_memberships|length }}</strong><em>Awaiting review</em></div><div class="overview-stat"><span class="stat-emoji">🎧</span><small>Language recordings</small><strong>{{ community_recording_count }}</strong><em>Community voices</em></div></div>
+    {% include 'council_panel.html' %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

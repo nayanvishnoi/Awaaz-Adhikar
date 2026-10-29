@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'step2.css' %}"><link rel="stylesheet" href="{% static 'step3.css' %}">
+<div class="page-intro"><div><span class="eyebrow">SPEAKER RECORDING CONTROL</span><h2>🎧 My Recordings</h2><p>Play your voice, choose permissions or withdraw future access.</p></div><a class="btn" href="{% url 'dashboard' %}">+ Record More</a></div>
+<div class="guide"><b>What happens here?</b><p><span>✅ You control consent</span><span>🛡 Council rules also apply</span><span>⛔ Withdrawal blocks future platform access</span></p></div>
+<section class="record-list">
+{% for recording in recordings %}
+<div class="record-card"><div class="record-head"><div><h3>{{ recording.title }}</h3><p>🌐 {{ recording.language }} · {{ recording.created_at|date:"d M Y, h:i A" }}</p></div>{% if recording.withdrawn %}<span class="pill">Withdrawn</span>{% else %}<span class="status-pill">Active</span>{% endif %}</div>
+  {% if not recording.withdrawn %}<audio controls preload="none" src="{% url 'play_recording' recording.pk %}"></audio>
+  <div class="consent-panel"><h4>🔐 Choose Allowed Uses</h4><p class="subtle">Researcher needs both your consent and council permission.</p>
+  <form method="post" action="{% url 'update_consent' recording.pk %}">{% csrf_token %}
+    <label><input type="checkbox" name="allow_research" {% if recording.allow_research %}checked{% endif %}> Research</label>
+    <label><input type="checkbox" name="allow_education" {% if recording.allow_education %}checked{% endif %}> Education</label>
+    <label><input type="checkbox" name="allow_ai" {% if recording.allow_ai %}checked{% endif %}> AI Training</label>
+    <label><input type="checkbox" name="allow_commercial" {% if recording.allow_commercial %}checked{% endif %}> Commercial</label>
+    <p><button class="btn" type="submit">Save Permissions</button></p>
+  </form></div>
+  <form method="post" action="{% url 'withdraw_recording' recording.pk %}" onsubmit="return confirm('Withdraw future permission? Previously downloaded copies and past AI training cannot be undone. Continue?')">{% csrf_token %}<button class="btn secondary-action" type="submit">⛔ Withdraw Permission</button></form>
+  {% else %}<p class="subtle">This recording can no longer be accessed by researchers from the platform.</p>{% endif %}
+  <form method="post" action="{% url 'delete_recording' recording.pk %}" class="delete-form">{% csrf_token %}<input type="hidden" name="confirm_delete" value="yes"><button class="btn danger" type="submit" onclick="return confirm('Are you sure you want to DELETE this recording? The audio file will be permanently removed from this server. Audit logs remain. This cannot be undone.')">🗑 Delete Recording</button></form>
+</div>
+{% empty %}<div class="empty-state"><h3>No recordings yet</h3><p>Start by recording your voice on the Speaker Dashboard.</p><a href="{% url 'dashboard' %}" class="btn">Record My Voice</a></div>{% endfor %}
+</section>
+<div class="notice"><b>Important:</b> Deleting an audio file from this system does not erase any copies already downloaded elsewhere or undo completed AI training. Historical audit events remain.</div>
+<section class="dash-section"><div class="dash-section-head"><div><span class="eyebrow">NAMED RESEARCHER PERMISSIONS</span><h2>Who Has Asked for Access?</h2><p>Every researcher must get your individual approval. You can revoke an approved request.</p></div></div>
+  {% for access_request in access_requests %}<div class="request-status-row"><div><b>{{ access_request.researcher.username }}</b><small>{{ access_request.recording.title }} · {{ access_request.get_purpose_display }}</small><small>{{ access_request.requested_at|date:'d M Y H:i' }}</small></div><span class="request-pill pill-{{ access_request.status }}">{{ access_request.get_status_display }}</span>
+    {% if access_request.status == 'approved' %}<form method="post" action="{% url 'speaker_review_access' access_request.pk %}" onsubmit="return confirm('Revoke future downloads for this researcher? Past downloads cannot be undone.')">{% csrf_token %}<input type="hidden" name="decision" value="revoked"><button class="btn outline-danger" type="submit">Revoke Access</button></form>{% elif access_request.status == 'pending' %}<a href="{% url 'dashboard' %}#access-requests" class="btn">Review Request →</a>{% endif %}</div>
+  {% empty %}<div class="dashboard-empty"><span>📭</span><div><b>No researcher requests yet</b><p>New access requests appear here and on your Speaker Dashboard.</p></div></div>{% endfor %}
+</section>
+{% include 'usage_logs.html' %}
+{% endblock %}

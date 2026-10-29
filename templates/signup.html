@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-layout"><aside class="auth-side"><div class="auth-art">♧</div><span class="eyebrow">JOIN THE LANGUAGE RIGHTS INITIATIVE</span><h2>Protect your voice. Support your community.</h2><p>Create an account to contribute recordings responsibly or request approved language research access.</p><div class="auth-feature">🎙 Speaker — upload & control audio</div><div class="auth-feature">⌕ Researcher — request access by purpose</div><div class="auth-feature">♧ Council — admin-approved membership only</div></aside>
+<section class="auth-panel"><div class="auth-heading"><span class="eyebrow">NEW ACCOUNT</span><h2>Create your account</h2><p>All fields are required unless marked optional.</p></div><form method="post" class="auth-form">{% csrf_token %}
+{% if form.non_field_errors %}<div class="auth-error">{{ form.non_field_errors }}</div>{% endif %}
+<label for="id_username">Username</label>{{ form.username }}{{ form.username.errors }}
+<label for="id_email">Email address</label>{{ form.email }}{{ form.email.errors }}
+<label for="id_role">I am registering as</label>{{ form.role }}{{ form.role.errors }}
+<label for="id_password1">Create password</label>{{ form.password1 }}{{ form.password1.errors }}
+<label for="id_password2">Confirm password</label>{{ form.password2 }}{{ form.password2.errors }}
+<button class="btn btn-full" type="submit">Create Account →</button></form><p class="auth-foot">Already registered? <a href="{% url 'login' %}">Login here</a></p><div class="secure-note">Community Council accounts are assigned only after administrator verification.</div></section></div>
+{% endblock %}

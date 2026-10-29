@@ -1,0 +1,18 @@
+<div class="flow-strip"><div><b>1</b><span>Choose recording</span></div><div><b>2</b><span>Request speaker</span></div><div><b>3</b><span>Speaker approves</span></div><div><b>4</b><span>Council & consent check</span></div><div><b>5</b><span>Download</span></div></div>
+<section class="dash-section" id="explore-recordings">
+  <div class="dash-section-head"><div><span class="eyebrow">DISCOVER LOCAL LANGUAGES</span><h2>Explore Recordings</h2><p>Request access to a recording. The speaker will see your username and decide.</p></div></div>
+  {% for recording in browse_recordings %}
+  <div class="catalog-row"><div class="catalog-cover">♫</div><div class="catalog-meta"><b>{{ recording.title }}</b><small>{{ recording.language }} · Speaker: {{ recording.speaker.username }}</small></div>
+  <form class="catalog-form" method="post" action="{% url 'researcher_access' recording.pk %}">{% csrf_token %}<label for="purpose-{{ recording.pk }}">Use for</label><select name="purpose" id="purpose-{{ recording.pk }}">{% for value,label in purpose_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select><button type="submit" class="btn">Request Permission →</button></form></div>
+  {% empty %}<div class="dashboard-empty"><span>🎵</span><div><b>No recordings yet</b><p>Speakers will add voice recordings here.</p></div></div>{% endfor %}
+  <p class="section-hint">Requesting a recording never starts an automatic download. The speaker decides individually.</p>
+</section>
+<section class="dash-section" id="my-requests">
+  <div class="dash-section-head"><div><span class="eyebrow">TRACK EVERY REQUEST</span><h2>Your Access Requests</h2><p>See the speaker's decision and download only if all permissions are active.</p></div></div>
+  {% for access_request in my_access_requests %}
+  <div class="request-status-row"><div><b>{{ access_request.recording.title }}</b><small>{{ access_request.recording.language }} · {{ access_request.get_purpose_display }}</small><small>Requested {{ access_request.requested_at|date:'d M Y, H:i' }}</small></div><span class="request-pill pill-{{ access_request.status }}">{{ access_request.get_status_display }} · {{ access_request.get_council_status_display }}</span>
+  {% if access_request.status == 'approved' and access_request.council_status == 'approved' %}<form method="post" action="{% url 'researcher_download' access_request.pk %}">{% csrf_token %}<button type="submit" class="btn">Download Voice ↓</button></form>{% else %}<span class="muted-action">{% if access_request.status == 'pending' %}Waiting for speaker{% elif access_request.status == 'approved' %}Waiting for council or council rejected{% else %}Request again from catalogue{% endif %}</span>{% endif %}</div>
+  {% empty %}<div class="dashboard-empty"><span>📨</span><div><b>No requests sent</b><p>Choose a recording above and click Request Permission.</p></div></div>{% endfor %}
+  <div class="notice"><b>Important:</b> Even after speaker approval, the speaker's permitted use and the Community Council's rule must both allow the download. Withdrawals block future downloads. Already-shared copies and past model training cannot automatically be undone.</div>
+</section>
+{% include 'usage_logs.html' %}

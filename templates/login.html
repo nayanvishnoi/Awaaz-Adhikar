@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-layout"><aside class="auth-side"><div class="auth-art">♫</div><span class="eyebrow">SAFE • TRANSPARENT • COMMUNITY-LED</span><h2>Welcome back to your voice rights portal.</h2><p>Your voice belongs to you. Continue managing your recordings, research access and community decisions.</p><div class="auth-feature">✓ Separate dashboards for each role</div><div class="auth-feature">✓ Transparent permission history</div><div class="auth-feature">✓ 45-minute secure sessions</div></aside>
+<section class="auth-panel"><div class="auth-heading"><span class="eyebrow">ACCOUNT ACCESS</span><h2>Sign in to your account</h2><p>Enter your credentials to continue to your dashboard.</p></div><form method="post" class="auth-form">{% csrf_token %}
+{% if form.non_field_errors %}<div class="auth-error">{{ form.non_field_errors }}</div>{% endif %}
+<label for="id_username">Username</label>{{ form.username }}{% if form.username.errors %}<div class="field-error">{{ form.username.errors }}</div>{% endif %}
+<label for="id_password">Password</label>{{ form.password }}{% if form.password.errors %}<div class="field-error">{{ form.password.errors }}</div>{% endif %}
+<button class="btn btn-full" type="submit">Login to Dashboard →</button></form><p class="auth-foot">New to Awaaz Adhikar? <a href="{% url 'signup' %}">Create an account</a></p><div class="secure-note">🔒 Session automatically expires 45 minutes after login.</div></section></div>
+{% endblock %}

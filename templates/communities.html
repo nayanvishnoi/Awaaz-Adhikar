@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'community.css' %}">
+<section class="community-hero"><small>BHASHA & BOL BHARAT</small><h2>Explore Language Communities</h2><p>Find your language community, request membership and help preserve local voices with collective consent.</p></section>
+{% if messages %}{% for message in messages %}<div class="notice">{{ message }}</div>{% endfor %}{% endif %}
+<div class="community-info"><b>Community participation</b><p>Speakers can request membership. Council approval makes the membership active. Joining does not automatically grant anyone access to your recordings; speaker consent and council rules still apply.</p></div>
+<section class="community-council-box"><div><span class="eyebrow">COMMUNITY MANAGEMENT</span><h3>Are you a Community Council representative?</h3><p>Open your Council Dashboard to review pending speaker memberships and choose Approve or Reject. Only admin-assigned Council accounts can manage members. If logged in as a Speaker, log out and sign in as the assigned Council user.</p></div>
+{% if user.is_authenticated and user.profile.role == 'council' %}<a class="btn" href="{% url 'council_dashboard' %}#community-management">Open Council Dashboard →</a>
+{% elif user.is_authenticated and user.is_superuser %}<a class="btn" href="{% url 'council_setup' %}">Set Up Council Account →</a>
+{% else %}<a class="btn" href="{% url 'login' %}?next={% url 'council_dashboard' %}">Council Login →</a>{% endif %}</section>
+<div class="cards community-grid">
+{% for community in communities %}
+<article class="community-card"><div class="community-icon">♬</div><h3>{{ community.name }}</h3><p>{{ community.description }}</p><div class="community-meta"><span>🌐 {{ community.language }}</span><span>👥 {{ community.member_count }} members</span></div>
+<div class="council-status {% if community.has_council %}configured{% else %}missing{% endif %}">{% if community.has_council %}✓ Council representative assigned{% else %}⚠ Council account not assigned yet — requests will wait{% endif %}</div>
+{% if user.is_authenticated %}
+  {% if community.my_status == 'pending' %}<span class="community-badge pending">Request pending</span>
+  {% elif community.my_status == 'approved' %}<span class="community-badge approved">✓ Member</span>
+  {% elif community.my_status == 'rejected' %}<span class="community-badge rejected">Request declined</span>
+  {% else %}<form method="post" action="{% url 'join_community' community.pk %}">{% csrf_token %}<button class="btn" type="submit">Request to Join</button></form>{% endif %}
+{% else %}<a class="btn" href="{% url 'login' %}?next={% url 'communities' %}">Log in to Join</a>{% endif %}
+</article>
+{% empty %}<p>No language communities have been configured yet.</p>{% endfor %}
+</div>
+<div class="notice">Awaaz Adhikar is a hackathon prototype, not a government service. Community rules govern future platform-controlled access only.</div>
+{% endblock %}

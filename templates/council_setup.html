@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-intro"><div><span class="eyebrow">SUPERUSER ONLY • TRUSTED COUNCIL ACCESS</span><h2>⚙ Community Council Account Setup</h2><p>Assign a verified Council role to an existing account. That user can then open the Council Dashboard and approve community requests.</p></div><a class="btn" href="{% url 'communities' %}">View Communities →</a></div>
+<div class="notice"><b>Why is this admin-only?</b> Council members control community-wide data permissions. Anyone should be able to request community membership, but only a site administrator should appoint a Council representative.</div>
+<div class="setup-grid">
+  <section class="dash-section">
+    <div class="dash-section-head"><div><span class="eyebrow">STEP 1 • VERIFY & ASSIGN</span><h2>Appoint Council Representative</h2><p>First create a user through Signup or Django Admin → Users.</p></div></div>
+    {% if council_candidates and council_communities %}
+    <form method="post" class="council-setup-form">{% csrf_token %}
+      <label for="council_user">Select existing account</label>
+      <select name="user_id" id="council_user" required><option value="">Select a user</option>{% for candidate in council_candidates %}<option value="{{ candidate.pk }}">{{ candidate.username }}</option>{% endfor %}</select>
+      <label for="council_community">Select language community</label>
+      <select name="community_id" id="council_community" required><option value="">Select a community</option>{% for community in council_communities %}<option value="{{ community.pk }}">{{ community.name }} ({{ community.language }})</option>{% endfor %}</select>
+      <p class="section-hint">The selected account will become a Council account for this community and will no longer have its old Speaker/Researcher dashboard. Verify their identity first.</p>
+      <button class="btn" type="submit" onclick="return confirm('Assign this verified user as a Community Council representative?')">✓ Assign Council Role</button>
+    </form>
+    {% else %}<div class="dashboard-empty"><span>⚠</span><div><b>A user or community is missing</b><p>Create a user and at least one Community before assigning a representative.</p></div></div>{% endif %}
+  </section>
+  <section class="dash-section">
+    <div class="dash-section-head"><div><span class="eyebrow">STEP 2 • COUNCIL SIGN IN</span><h2>Existing Council Accounts</h2><p>Ask representatives to log in with their own password.</p></div></div>
+    {% for council in council_representatives %}<div class="request-status-row"><div><b>{{ council.user.username }}</b><small>Community language: {{ council.community_name|default:'Not assigned' }}</small></div><span class="request-pill pill-approved">Council</span></div>
+    {% empty %}<div class="dashboard-empty"><span>👥</span><div><b>No Council accounts yet</b><p>Assign an account using the form to get started.</p></div></div>{% endfor %}
+    <div class="dashboard-cta"><div><b>Open Council Dashboard</b><p>Only appointed Council accounts can approve/reject speaker memberships.</p></div><a href="{% url 'council_dashboard' %}" class="btn">Council Dashboard →</a></div>
+  </section>
+</div>
+{% endblock %}
